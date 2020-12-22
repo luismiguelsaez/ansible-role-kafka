@@ -1,0 +1,10 @@
+---
+
+zookeeper_docker_image: zookeeper:3.5.8
+kafka_docker_image: bitnami/kafka:2.6.0
+
+zookeeper_listen_address: "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}"
+kafka_listen_address: "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}"
+
+zookeeper_servers_addresses: [ "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}" ]
+kafka_servers_addresses: [ "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}" ]
