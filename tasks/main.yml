@@ -1,11 +1,7 @@
 ---
 
-- name: Install docker package
-  yum:
-    state: latest
-    name: python-docker
-    disablerepo: docker-main-repo
-    update_cache: True
+- include_tasks: molecule.yml
+  when: molecule_testing is defined and molecule_testing
 
 - name: Start zookeeper server
   docker_container:
@@ -17,12 +13,12 @@
       - "{{ zookeeper_listen_address }}:2888:2888"
       - "{{ zookeeper_listen_address }}:3888:3888"
     env:
-      ZOOKEEPER_SERVER_ID: "{% for s in zookeeper_servers_addresses %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
+      ZOOKEEPER_SERVER_ID: "{% for s in zookeeper_servers_addresses|sort %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
       ZOOKEEPER_CLIENT_PORT: "2181"
       ZOOKEEPER_TICK_TIME: "2000"
       ZOOKEEPER_INIT_LIMIT: "5"
       ZOOKEEPER_SYNC_LIMIT: "2"
-      ZOOKEEPER_SERVERS: "{% for s in zookeeper_servers_addresses %}{{ s }}:2888:3888{% if loop.index < zookeeper_servers_addresses |length %};{% endif %}{% endfor %}"
+      ZOOKEEPER_SERVERS: "{% for s in zookeeper_servers_addresses|sort %}{{ s }}:2888:3888{% if loop.index < zookeeper_servers_addresses |length %};{% endif %}{% endfor %}"
 
 - name: Start kafka server
   docker_container:
@@ -33,8 +29,8 @@
       - "{{ kafka_listen_address }}:9092:9092"
       - "{{ kafka_listen_address }}:8777:8777"
     env:
-      KAFKA_BROKER_ID: "{% for s in kafka_servers_addresses %}{% if s == kafka_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
-      KAFKA_ZOOKEEPER_CONNECT: "{% for s in zookeeper_servers_addresses %}{{ s }}:2181{% if loop.index < zookeeper_servers_addresses |length %},{% endif %}{% endfor %}"
+      KAFKA_BROKER_ID: "{% for s in kafka_servers_addresses|sort %}{% if s == kafka_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
+      KAFKA_ZOOKEEPER_CONNECT: "{% for s in zookeeper_servers_addresses|sort %}{{ s }}:2181{% if loop.index < zookeeper_servers_addresses |length %},{% endif %}{% endfor %}"
       ALLOW_PLAINTEXT_LISTENER: "yes"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://{{ kafka_listen_address }}:9092
       #KAFKA_OPTS: -javaagent:/opt/bitnami/jmx_exporter.jar=8777:/opt/bitnami/kafka-2_0_0.yml

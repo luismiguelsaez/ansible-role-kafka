@@ -25,6 +25,10 @@ provisioner:
   options:
     become: true
     vvv: false
+  inventory:
+    group_vars:
+      all:
+        molecule_testing: True
 
 verifier:
   name: ansible

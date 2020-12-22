@@ -1,0 +1,8 @@
+---
+
+- name: Install docker package
+  yum:
+    state: latest
+    name: python-docker
+    disablerepo: docker-main-repo
+    update_cache: True
