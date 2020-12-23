@@ -6,9 +6,13 @@ testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
     os.environ['MOLECULE_INVENTORY_FILE']).get_hosts('all')
 
 
-def test_hosts_file(host):
-    f = host.file('/etc/hosts')
+def test_docker_service(host):
+    assert host.ansible("service", "name=docker state=started")["changed"] is False
 
-    assert f.exists
-    assert f.user == 'root'
-    assert f.group == 'root'
+def test_kafka_running(host):
+    kafka = host.docker("kafka")
+    assert kafka.is_running
+
+def test_zookeeper_running(host):
+    zookeeper = host.docker("zookeeper")
+    assert zookeeper.is_running

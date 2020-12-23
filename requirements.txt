@@ -5,4 +5,4 @@ requests
 molecule-vagrant
 python-vagrant
 pytest
-testinfra
+pytest-testinfra==6.1.0
