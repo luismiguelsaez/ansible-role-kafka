@@ -41,6 +41,12 @@
     dest: "{{ zookeeper_config_dir }}/zoo.cfg"
   register: zookeeper_config_file
 
+- name: Create zookeeper id file
+  copy:
+    dest: "{{ zookeeper_data_dir }}/myid"
+    content: "{% for s in zookeeper_servers_addresses|sort %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
+  when: zookeeper_servers_addresses|length > 1
+
 #- name: Copy certificates
   # TODO
 
@@ -64,7 +70,7 @@
       - "{{ zookeeper_data_log_dir }}:/datalog:rw,Z"
       - "{{ zookeeper_logs_dir }}:/logs:rw,Z"
     env:
-      ZOO_STANDALONE_ENABLED: "{% if zookeeper_servers_addresses|length < 2 %}true{% else %}false{% endif %}"
+      ZOO_STANDALONE_ENABLED: "{% if zookeeper_servers_addresses|length > 1 %}false{% else %}true{% endif %}"
       ZOO_CONF_DIR: /conf
       ZOO_DATA_DIR: /data
       ZOO_DATA_LOG_DIR: /datalog
