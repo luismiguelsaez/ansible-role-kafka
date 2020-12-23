@@ -3,34 +3,98 @@
 - include_tasks: molecule.yml
   when: molecule_testing is defined and molecule_testing
 
+- name: Create kafka directories
+  file:
+    state: directory
+    path: "{{ item }}"
+    recurse: False
+    owner: "{{ kafka_docker_container_user_uid }}"
+    group: "{{ kafka_docker_container_group_uid }}"
+  with_items:
+    - "{{ kafka_config_dir }}"
+    - "{{ kafka_data_dir }}"
+  register: kafka_dir_create
+
+- name: Create kafka server properties file
+  template:
+    src: server.properties
+    dest: "{{ kafka_config_dir }}/server.properties"
+    owner: "{{ kafka_docker_container_user_uid }}"
+    group: "{{ kafka_docker_container_group_uid }}"
+  register: kafka_config_file
+
+- name: Create zookeeper directories
+  file:
+    state: directory
+    path: "{{ item }}"
+    recurse: False
+  with_items:
+    - "{{ zookeeper_config_dir }}"
+    - "{{ zookeeper_data_dir }}"
+    - "{{ zookeeper_data_log_dir }}"
+    - "{{ zookeeper_logs_dir }}"
+  register: zookeeper_dir_create
+
+- name: Create zookeeper server config file
+  template:
+    src: zoo.cfg
+    dest: "{{ zookeeper_config_dir }}/zoo.cfg"
+  register: zookeeper_config_file
+
+#- name: Copy certificates
+  # TODO
+
 - name: Start zookeeper server
   docker_container:
     name: smd_infra_zookeeper
     image: "{{ zookeeper_docker_image }}"
+    restart: "{{ zookeeper_config_file is defined and zookeeper_config_file.changed }}"
     state: started
     ports:
       - "{{ zookeeper_listen_address }}:2181:2181"
       - "{{ zookeeper_listen_address }}:2888:2888"
       - "{{ zookeeper_listen_address }}:3888:3888"
+    labels:
+      SERVICE_TYPE: zookeeper 
+      SERVICE_OWNER: infra
+      SERVICE_LABEL: "{{ zookeeper_cluster_name }}"
+    volumes:
+      - "{{ zookeeper_config_dir }}:/conf:rw,Z"
+      - "{{ zookeeper_data_dir }}:/data:rw,Z"
+      - "{{ zookeeper_data_log_dir }}:/datalog:rw,Z"
+      - "{{ zookeeper_logs_dir }}:/logs:rw,Z"
     env:
-      ZOOKEEPER_SERVER_ID: "{% for s in zookeeper_servers_addresses|sort %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
-      ZOOKEEPER_CLIENT_PORT: "2181"
-      ZOOKEEPER_TICK_TIME: "2000"
-      ZOOKEEPER_INIT_LIMIT: "5"
-      ZOOKEEPER_SYNC_LIMIT: "2"
-      ZOOKEEPER_SERVERS: "{% for s in zookeeper_servers_addresses|sort %}{{ s }}:2888:3888{% if loop.index < zookeeper_servers_addresses |length %};{% endif %}{% endfor %}"
+      ZOO_STANDALONE_ENABLED: "{% if zookeeper_servers_addresses|length < 2 %}true{% else %}false{% endif %}"
+      ZOO_CONF_DIR: /conf
+      ZOO_DATA_DIR: /data
+      ZOO_DATA_LOG_DIR: /datalog
+      ZOO_LOG_DIR: /logs
+      #ZOO_MY_ID: "{% for s in zookeeper_servers_addresses|sort %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
+      #ZOO_SERVERS: "\"{% for s in zookeeper_servers_addresses|sort %}server.{{ loop.index }}={{ s }}:2888:3888;2181{% if loop.index < zookeeper_servers_addresses|length %} {% endif %}{% endfor %}\""
+      #ZOO_CLIENT_PORT: "2181"
+      #ZOO_TICK_TIME: "2000"
+      #ZOO_INIT_LIMIT: "5"
+      #ZOO_SYNC_LIMIT: "2"
 
 - name: Start kafka server
   docker_container:
     name: smd_infra_kafka
     image: "{{ kafka_docker_image }}"
+    restart: "{{ kafka_config_file is defined and kafka_config_file.changed }}"
     state: started
     ports:
       - "{{ kafka_listen_address }}:9092:9092"
       - "{{ kafka_listen_address }}:8777:8777"
+    volumes:
+      - "{{ kafka_data_dir }}:/bitnami/kafka/data:rw,Z"
+      - "{{ kafka_config_dir }}:/bitnami/kafka/config:ro,Z"
+    labels:
+      SERVICE_TYPE: kafka 
+      SERVICE_OWNER: infra
+      SERVICE_LABEL: "{{ kafka_cluster_name }}"
     env:
-      KAFKA_BROKER_ID: "{% for s in kafka_servers_addresses|sort %}{% if s == kafka_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
-      KAFKA_ZOOKEEPER_CONNECT: "{% for s in zookeeper_servers_addresses|sort %}{{ s }}:2181{% if loop.index < zookeeper_servers_addresses |length %},{% endif %}{% endfor %}"
+      #KAFKA_BROKER_ID: "{% for s in kafka_servers_addresses|sort %}{% if s == kafka_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
+      #KAFKA_ZOOKEEPER_CONNECT: "{% for s in zookeeper_servers_addresses|sort %}{{ s }}:2181{% if loop.index < zookeeper_servers_addresses|length %},{% endif %}{% endfor %}"
       ALLOW_PLAINTEXT_LISTENER: "yes"
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://{{ kafka_listen_address }}:9092
+      #KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://{{ kafka_listen_address }}:9092
       #KAFKA_OPTS: -javaagent:/opt/bitnami/jmx_exporter.jar=8777:/opt/bitnami/kafka-2_0_0.yml

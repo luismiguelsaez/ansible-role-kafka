@@ -2,4 +2,4 @@
 - hosts: localhost
   remote_user: root
   roles:
-    - ansible-role-kafka
+    - sd-re-ansible-role-smd-kafka

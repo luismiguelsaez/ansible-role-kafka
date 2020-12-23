@@ -1,10 +1,26 @@
 ---
 
+zookeeper_cluster_name: testing
+kafka_cluster_name: testing
+
+# Container
+kafka_docker_container_user_uid: "1001"
+kafka_docker_container_group_uid: "0"
+
+# Image
 zookeeper_docker_image: zookeeper:3.5.8
 kafka_docker_image: bitnami/kafka:2.6.0
 
+# Networking
 zookeeper_listen_address: "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}"
-kafka_listen_address: "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}"
-
 zookeeper_servers_addresses: [ "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}" ]
+kafka_listen_address: "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}"
 kafka_servers_addresses: [ "{{ ansible_default_ipv4.address|default(ansible_default_ipv4) }}" ]
+
+# Storage
+kafka_data_dir: /var/dockershared/kafka/data
+kafka_config_dir: /var/dockershared/kafka/config
+zookeeper_config_dir: /var/dockershared/zookeeper/conf
+zookeeper_data_dir: /var/dockershared/zookeeper/data
+zookeeper_data_log_dir: /var/dockershared/zookeeper/datalog
+zookeeper_logs_dir: /var/dockershared/zookeeper/logs
