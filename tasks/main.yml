@@ -65,17 +65,17 @@
       SERVICE_OWNER: infra
       SERVICE_LABEL: "{{ zookeeper_cluster_name }}"
     volumes:
-      - "{{ zookeeper_config_dir }}:/conf:rw,Z"
+      - "{{ zookeeper_config_dir }}/zoo.cfg:/conf/zoo.cfg:rw,Z"
       - "{{ zookeeper_data_dir }}:/data:rw,Z"
       - "{{ zookeeper_data_log_dir }}:/datalog:rw,Z"
       - "{{ zookeeper_logs_dir }}:/logs:rw,Z"
     env:
+      ZOO_MY_ID: "{% for s in zookeeper_servers_addresses|sort %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
       ZOO_STANDALONE_ENABLED: "{% if zookeeper_servers_addresses|length > 1 %}false{% else %}true{% endif %}"
       ZOO_CONF_DIR: /conf
       ZOO_DATA_DIR: /data
       ZOO_DATA_LOG_DIR: /datalog
       ZOO_LOG_DIR: /logs
-      #ZOO_MY_ID: "{% for s in zookeeper_servers_addresses|sort %}{% if s == zookeeper_listen_address %}{{ loop.index }}{% endif %}{% endfor %}"
       #ZOO_SERVERS: "\"{% for s in zookeeper_servers_addresses|sort %}server.{{ loop.index }}={{ s }}:2888:3888;2181{% if loop.index < zookeeper_servers_addresses|length %} {% endif %}{% endfor %}\""
       #ZOO_CLIENT_PORT: "2181"
       #ZOO_TICK_TIME: "2000"
