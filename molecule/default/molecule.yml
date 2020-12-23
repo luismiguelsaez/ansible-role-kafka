@@ -31,4 +31,9 @@ provisioner:
         molecule_testing: True
 
 verifier:
-  name: ansible
+  #name: ansible
+  name: testinfra
+  enabled: True
+  directory: tests/
+  lint:
+    name: flake8

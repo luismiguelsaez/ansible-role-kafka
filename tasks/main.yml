@@ -52,7 +52,7 @@
 
 - name: Start zookeeper server
   docker_container:
-    name: smd_infra_zookeeper
+    name: zookeeper
     image: "{{ zookeeper_docker_image }}"
     restart: "{{ zookeeper_config_file is defined and zookeeper_config_file.changed }}"
     state: started
@@ -84,7 +84,7 @@
 
 - name: Start kafka server
   docker_container:
-    name: smd_infra_kafka
+    name: kafka
     image: "{{ kafka_docker_image }}"
     restart: "{{ kafka_config_file is defined and kafka_config_file.changed }}"
     state: started
